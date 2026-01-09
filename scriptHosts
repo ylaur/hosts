@@ -1,19 +1,26 @@
 #! /usr/bin/bash
 
+verifica() {
+    DNS=$1
+    ID=$2
+    bad_var_name=$3
+    cnt=0
+        nslookup "$DNS" $bad_var_name | while read text ip nouse; do
+            if [ "$cnt" -eq 5 ]; then
+                if [ "$ID" != "$ip" ]; then
+                    echo "Bogus IP for $DNS in /etc/hosts"
+                fi
+            fi
+            ((cnt++))
+        done
+    return 0
+}
+
 cat /etc/hosts | while read id dns noUse; do
     if [ "$id" == "::1" ]; then
         break
     elif [ "$id" == "127.0.0.1" ]; then
         continue
     fi
-    cnt=0
-    nslookup "$dns" 8.8.8.8 | while read text ip nouse; do
-        if [ "$cnt" -eq 5 ]; then
-            if [ "$id" != "$ip" ]; then
-                echo "Bogus IP for $dns in /etc/hosts"
-            fi
-        fi
-        ((cnt++))
-    done
+    verifica "$dns" "$id" "8.8.8.8"
 done
-
